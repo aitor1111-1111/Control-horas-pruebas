@@ -1,4 +1,4 @@
-const CACHE_NAME = 'control-horas-profesional-v5-12-0-cashsound';
+const CACHE_NAME = 'control-horas-profesional-v5-12-1-audio-refresh';
 const APP_FILES = [
   "./",
   "./index.html",
