@@ -1,4 +1,4 @@
-const CACHE_NAME = 'control-horas-profesional-v5-10-8-vault';
+const CACHE_NAME = 'control-horas-profesional-v5-10-9-vault';
 const APP_FILES = [
   "./",
   "./index.html",
