@@ -30,17 +30,17 @@ function screen(){
 }
 function showError(e){const message=e?.message||'No se ha podido guardar el almacén cifrado.';const el=$('vaultError');if(el){el.textContent=message;return;}console.error('Error del almacén cifrado:',e);window.dispatchEvent(new CustomEvent('vault-error',{detail:message}));}
 function saveVault(){
- const target=revision;
- const snapshot=JSON.parse(JSON.stringify(values));
  const task=queue.catch(()=>{}).then(async()=>{
-  if(!vault||!master) throw new Error('El almacén cifrado todavía no está desbloqueado.');
-  if(!window.LocalEncryptedVault||typeof window.LocalEncryptedVault.update!=='function') throw new Error('No está cargado el módulo de cifrado.');
+  if(!vault||!master) throw new Error('La caja fuerte aún no está desbloqueada.');
+  const target=revision;
+  const snapshot=JSON.parse(JSON.stringify(values));
   const next=await window.LocalEncryptedVault.update(vault,master,snapshot);
   const serialized=JSON.stringify(next);
   native.set.call(localStorage,VAULT_KEY,serialized);
-  if(native.get.call(localStorage,VAULT_KEY)!==serialized) throw new Error('El navegador no confirmó la escritura del almacén cifrado.');
+  const check=native.get.call(localStorage,VAULT_KEY);
+  if(check!==serialized) throw new Error('El navegador no ha confirmado el guardado cifrado.');
   vault=next;
-  savedRevision=Math.max(savedRevision,target);
+  savedRevision=target;
   saveError=null;
  });
  queue=task.catch(err=>{saveError=err;});
@@ -48,9 +48,7 @@ function saveVault(){
 }
 async function flushVault(){
  while(savedRevision<revision){
-  const target=revision;
   await saveVault();
-  if(savedRevision<revision && revision===target) throw saveError||new Error('Los datos todavía no se han guardado.');
  }
  if(saveError) throw saveError;
  return true;
