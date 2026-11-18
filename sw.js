@@ -1,4 +1,4 @@
-const CACHE_NAME = 'control-horas-profesional-v5-10-7-vault';
+const CACHE_NAME = 'control-horas-profesional-v5-10-8-vault';
 const APP_FILES = [
   "./",
   "./index.html",
@@ -8,6 +8,7 @@ const APP_FILES = [
   "./icon-192.png",
   "./icon-512.png",
   "./sonido-dinero.mp3",
+  "./sonido_servicio_caja_retro.mp3",
   "./sonido_cobrado_kaching.mp3"
 ];
 
