@@ -34,8 +34,11 @@ function saveVault(){
  const snapshot=JSON.parse(JSON.stringify(values));
  const task=queue.catch(()=>{}).then(async()=>{
   if(!vault||!master) throw new Error('El almacén cifrado todavía no está desbloqueado.');
+  if(!window.LocalEncryptedVault||typeof window.LocalEncryptedVault.update!=='function') throw new Error('No está cargado el módulo de cifrado.');
   const next=await window.LocalEncryptedVault.update(vault,master,snapshot);
-  native.set.call(localStorage,VAULT_KEY,JSON.stringify(next));
+  const serialized=JSON.stringify(next);
+  native.set.call(localStorage,VAULT_KEY,serialized);
+  if(native.get.call(localStorage,VAULT_KEY)!==serialized) throw new Error('El navegador no confirmó la escritura del almacén cifrado.');
   vault=next;
   savedRevision=Math.max(savedRevision,target);
   saveError=null;
