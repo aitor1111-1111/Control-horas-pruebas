@@ -60,6 +60,15 @@ async function writeVault(key,value){
  await flushVault();
  return true;
 }
+async function writeVaultBatch(updates){
+ if(!updates||typeof updates!=='object'||Array.isArray(updates)) throw new Error('Lote de guardado no válido.');
+ const entries=Object.entries(updates);
+ if(!entries.length||entries.some(([key,value])=>!KEYS.includes(key)||typeof value!=='string')) throw new Error('El lote contiene datos no permitidos.');
+ for(const [key,value] of entries) values[key]=value;
+ revision++;
+ await flushVault();
+ return true;
+}
 function installStorage(){
  Storage.prototype.getItem=function(k){return KEYS.includes(String(k))? (Object.prototype.hasOwnProperty.call(values,k)?values[k]:null):native.get.call(this,k)};
  Storage.prototype.setItem=function(k,v){if(KEYS.includes(String(k))){values[k]=String(v);revision++;saveVault().catch(showError);return;}return native.set.call(this,k,v)};
@@ -127,6 +136,7 @@ async function start(){
 }
 window.__vaultFlush=flushVault;
 window.__vaultWrite=writeVault;
+window.__vaultWriteBatch=writeVaultBatch;
 window.__exportEncryptedBackup=async()=>{await flushVault();return native.get.call(localStorage,VAULT_KEY)};
 window.__vaultReady=(async()=>{try{await start()}catch(e){screen();showError(e);throw e}})();
 })();
