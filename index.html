@@ -195,25 +195,21 @@ const quantity=()=>Math.max(0,Number(String($('quantity').value).replace(',','.'
 function calc(){let c=cleanConcept($('concept').value),hourly=HOURLY.has(c),fixedHours=EIGHT_HOUR_SERVICES.has(c),q=fixedHours?8:quantity(),rate=Number(rates[c]||0),units=fixedHours?1:q,amount=units*rate;$('qtyLabel').textContent=fixedHours?'Duración del servicio · horas':(hourly?'Cantidad · horas':'Cantidad · servicios');$('quantity').inputMode='decimal';$('quantity').value=fixedHours?'8':$('quantity').value;$('quantity').readOnly=fixedHours;$('unitRate').textContent=euro(rate)+(hourly?' / h':' / serv.');$('amount').textContent=euro(amount);return{c,q,hourly,rate,amount}}
 // Audio real desde los dos WAV incluidos en el repositorio. Sin sintetizador ni pitidos alternativos.
 const cashSounds={
-  service:new Audio(new URL('sonido_servicio_caja_retro.mp3?v=5.11.7',document.baseURI).href),
-  paid:new Audio(new URL('sonido_cobrado_kaching.mp3?v=5.10.5',document.baseURI).href)
+  service:new Audio(new URL('./sonido_servicio_caja_retro.mp3',document.baseURI).href),
+  paid:new Audio(new URL('./sonido_cobrado_kaching.mp3',document.baseURI).href)
 };
 Object.values(cashSounds).forEach(audio=>{audio.preload='auto';audio.load();});
 function playCashSound(kind='service'){
-  const audio=cashSounds[kind]||cashSounds.service;
-  try{
-    audio.pause();
-    audio.currentTime=0;
-    const playback=audio.play();
-    if(playback&&typeof playback.catch==='function'){
-      playback.catch(err=>{
-        console.error('No se pudo reproducir el archivo WAV '+audio.currentSrc,err);
-        toast('No se ha podido cargar el sonido. Comprueba que los archivos WAV están en la raíz de GitHub.');
-      });
-    }
-  }catch(e){
-    console.error('Error al reproducir el archivo WAV',e);
-    toast('Error al reproducir el sonido. Comprueba los archivos WAV de GitHub.');
+  const source=kind==='paid'?'./sonido_cobrado_kaching.mp3':'./sonido_servicio_caja_retro.mp3';
+  const audio=new Audio(new URL(source,document.baseURI).href);
+  audio.preload='auto';
+  audio.volume=1;
+  const playback=audio.play();
+  if(playback&&typeof playback.catch==='function'){
+    playback.catch(err=>{
+      console.error('No se pudo reproducir el sonido',audio.currentSrc,err);
+      toast('El navegador ha bloqueado o no ha podido abrir el sonido. Comprueba el volumen y vuelve a tocar la acción.');
+    });
   }
 }
 $('concept').onchange=()=>{$('quantity').value=EIGHT_HOUR_SERVICES.has(cleanConcept($('concept').value))?'8':'1';calc()};$('quantity').oninput=calc;
