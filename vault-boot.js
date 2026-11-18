@@ -6,6 +6,8 @@ const KEYS=['horas_productividad_v1','horas_productividad_rates_v1','horas_produ
 const VAULT_KEY='control_horas_encrypted_v1';
 const native={get:Storage.prototype.getItem,set:Storage.prototype.setItem,remove:Storage.prototype.removeItem};
 let vault=null, master=null, values={}, queue=Promise.resolve(), lastActivity=Date.now(), lockTimer=null, saveError=null, revision=0, savedRevision=0;
+let resolveUnlocked;
+window.__vaultUnlocked=new Promise(resolve=>{resolveUnlocked=resolve});
 const $=id=>document.getElementById(id);
 function screen(){
  if($('vaultScreen')) return;
@@ -80,6 +82,7 @@ function touch(){
 }
 function activate(){
  installStorage(); document.body.classList.add('vault-unlocked'); $('vaultScreen').remove();
+ resolveUnlocked?.(true);
  ['pointerdown','keydown','touchstart','click'].forEach(ev=>document.addEventListener(ev,touch,{passive:true}));
  document.addEventListener('visibilitychange',async()=>{if(document.visibilityState==='visible'&&Date.now()-lastActivity>=300000){try{await flushVault();location.reload()}catch(e){showError(e)}}else touch()});
  touch();
