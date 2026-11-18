@@ -1,4 +1,4 @@
-const CACHE_NAME = 'control-horas-profesional-v5-12-2-cash-events';
+const CACHE_NAME = 'control-horas-profesional-v5-12-3-vault-unlock-wait';
 const APP_FILES = [
   "./",
   "./index.html",
