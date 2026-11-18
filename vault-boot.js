@@ -32,20 +32,31 @@ function showError(e){const message=e?.message||'No se ha podido guardar el alma
 function saveVault(){
  const target=revision;
  const snapshot=JSON.parse(JSON.stringify(values));
- // Recover the queue after a failed write so later saves can still proceed.
- queue=queue.catch(()=>{}).then(async()=>{
-  if(!vault||!master) return;
+ const task=queue.catch(()=>{}).then(async()=>{
+  if(!vault||!master) throw new Error('El almacén cifrado todavía no está desbloqueado.');
   const next=await window.LocalEncryptedVault.update(vault,master,snapshot);
   native.set.call(localStorage,VAULT_KEY,JSON.stringify(next));
-  vault=next; savedRevision=target; saveError=null;
- }).catch(err=>{saveError=err;throw err});
- return queue;
+  vault=next;
+  savedRevision=Math.max(savedRevision,target);
+  saveError=null;
+ });
+ queue=task.catch(err=>{saveError=err;});
+ return task;
 }
 async function flushVault(){
- // A rejected previous write must not permanently block future retries.
- try{await queue}catch(e){}
- if(saveError||savedRevision<revision){await saveVault();await queue;}
- if(saveError||savedRevision<revision) throw saveError||new Error('Los datos todavía no se han guardado.');
+ while(savedRevision<revision){
+  const target=revision;
+  await saveVault();
+  if(savedRevision<revision && revision===target) throw saveError||new Error('Los datos todavía no se han guardado.');
+ }
+ if(saveError) throw saveError;
+ return true;
+}
+async function writeVault(key,value){
+ if(!KEYS.includes(String(key))) throw new Error('Clave de almacenamiento no permitida.');
+ values[key]=String(value);
+ revision++;
+ await flushVault();
  return true;
 }
 function installStorage(){
@@ -114,6 +125,7 @@ async function start(){
  };
 }
 window.__vaultFlush=flushVault;
+window.__vaultWrite=writeVault;
 window.__exportEncryptedBackup=async()=>{await flushVault();return native.get.call(localStorage,VAULT_KEY)};
 window.__vaultReady=(async()=>{try{await start()}catch(e){screen();showError(e);throw e}})();
 })();
