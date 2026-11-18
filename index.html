@@ -368,6 +368,22 @@ $('restoreFile').onchange=async e=>{
  e.target.value='';
 };
 $('csv').onclick=()=>{if(!confirm('El CSV se exporta SIN CIFRAR y cualquiera que acceda al archivo podrá leer tus datos. ¿Quieres continuar?'))return;if(!data.length)return toast('No hay registros para exportar.');let rows=[['Fecha','Tipo de servicio','Cantidad','Unidad','Tarifa','Importe','Estado','Observaciones'],...data.map(x=>[x.date,x.concept,(EIGHT_HOUR_SERVICES.has(x.concept)?Number(x.actualHours??8):(x.quantity??x.hours)),(HOURLY.has(x.concept)||EIGHT_HOUR_SERVICES.has(x.concept))?'horas':'servicios',x.rate??rates[x.concept],x.amount,x.paid?'Cobrado':'Pendiente',x.notes||''])];let csv=rows.map(r=>r.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(';')).join('\r\n');download('\ufeff'+csv,'control_horas.csv','text/csv;charset=utf-8')};
-async function updateApp(){const btn=$('updateAppBtn');if(btn){btn.disabled=true;btn.textContent='Comprobando…'}try{if(!('serviceWorker'in navigator)){toast('Abre la aplicación desde Chrome para actualizarla.');return}let reg=await navigator.serviceWorker.getRegistration();if(!reg)reg=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});await reg.update();let worker=reg.installing;if(worker){await new Promise(resolve=>{let done=false;const finish=()=>{if(!done&&(worker.state==='activated'||worker.state==='redundant')){done=true;resolve()}};worker.addEventListener('statechange',finish);setTimeout(()=>{if(!done){done=true;resolve()}},5000);finish()})}toast('Comprobación terminada. Actualizando…');setTimeout(()=>location.reload(),500)}catch(e){console.error('Error al actualizar',e);toast('No se pudo comprobar la actualización. Comprueba tu conexión.');if(btn){btn.disabled=false;btn.textContent='↻ Actualizar'}}}
+async function updateApp(){
+ const btn=$('updateAppBtn');
+ if(btn){btn.disabled=true;btn.textContent='Actualizando…'}
+ try{
+  if(!('serviceWorker'in navigator)){location.replace(location.pathname+'?refresh=12-1');return}
+  const reg=await navigator.serviceWorker.getRegistration();
+  if(reg){
+   if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});
+   await reg.unregister();
+  }
+  toast('Actualizando archivos de la aplicación…');
+  setTimeout(()=>location.replace(location.pathname+'?refresh=12-1'),350);
+ }catch(e){
+  console.error('Error al forzar actualización',e);
+  location.replace(location.pathname+'?refresh=12-1');
+ }
+}
 window.showView=showView;window.updateApp=updateApp;calc();render();if('serviceWorker'in navigator){window.addEventListener('load',async()=>{try{let reg=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});reg.update()}catch(e){console.warn('No se pudo actualizar el service worker',e)}})}
 </script></body></html>
